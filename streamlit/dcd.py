@@ -25,15 +25,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Fungsi untuk menghitung total sewa sepeda casual dan registered
-
-
-
-
-
 # Membaca data dan memastikan kolom 'date' dalam format datetime
-day_df = pd.read_csv("day_df.csv")
-hour_df = pd.read_csv("hour_df.csv")
+import os
+file_path_day = os.path.join(os.getcwd(), 'day_df.csv')
+file_path_hour = os.path.join(os.getcwd(), 'hour_df.csv')
+day_df = pd.read_csv(file_path_day)
+hour_df = pd.read_csv(file_path_hour)
 # day_df['date'] = pd.to_datetime(day_df['date'])  # Mengonversi kolom 'date' ke datetime
 # hour_df['date'] = pd.to_datetime(hour_df['date'])  # Mengonversi kolom 'date' ke datetime
 

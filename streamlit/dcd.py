@@ -123,19 +123,34 @@ def count_season(data):
     # data_2011 = data[data.index.year == 2011]
     
     # Mengelompokkan berdasarkan 'season' dan menghitung rata-rata 'total_count'
-    grouped_cuaca = data.groupby('season').agg({
-        'total_count': 'mean'
+    grouped_cuaca = day_df.groupby('weathersit').agg({
+    'total_count': 'mean'
     })
+
     
     return grouped_cuaca
 
-def count_weather(data):
-    # Mengelompokkan berdasarkan 'weathersit' dan menghitung rata-rata 'total_count'
-    grouped_musim = data.groupby('weathersit').agg({
-        'total_count': 'mean'
-    })
+# def count_weather(data):
+#     # Mengelompokkan berdasarkan 'weathersit' dan menghitung rata-rata 'total_count'
+#     grouped_musim = data.groupby('weathersit').agg({
+#         'total_count': 'mean'
+#     })
     
-    return grouped_musim
+#     return grouped_musim
+
+def get_top_hours_by_season(dataframe, filter_condition, top_n=1):
+    # Filter data berdasarkan kondisi
+    filtered_data = dataframe[filter_condition]
+
+    # Mengelompokkan data berdasarkan 'season' dan 'hour', lalu menghitung rata-rata 'total_count'
+    grouped_data = filtered_data.groupby(['season', 'hour']).agg({
+        'total_count': 'mean'
+    }).reset_index()
+
+    # Mengambil n jam teratas untuk setiap musim berdasarkan 'total_count'
+    top_hours = grouped_data.groupby('season').apply(lambda x: x.nlargest(top_n, 'total_count')).reset_index(drop=True)
+
+    return top_hours
 
 def count_registered(data):
     # data_2011 = data[data.index.year == 2011]
@@ -154,11 +169,23 @@ def count_hour(data):
 # Siapkan dataframe bulanan
 monthly_rental_df = month_rental(day_main_df)
 season_counts = count_season(day_main_df)
-weather_counts = count_weather(day_main_df)
+# weather_counts = count_weather(day_main_df)
 registered_counts = count_registered(day_main_df)
 hour_counts = count_hour(hour_main_df)
+top5_per_season_workingday = get_top_hours_by_season(
+    dataframe=hour_df,
+    filter_condition=(hour_df['workingday'] == 1),
+    top_n=1
+)
 
-col1, col2, col3 = st.columns([3,2,2])
+# Hari libur atau libur nasional
+top5_per_season_holiday = get_top_hours_by_season(
+    dataframe=hour_df,
+    filter_condition=((hour_df['workingday'] == 0) | (hour_df['holiday'] == 1)),
+    top_n=1
+)
+
+col1, col2 = st.columns([3,2])
 # Subheader
 with col1:
     plt.figure(figsize=(10, 5))
@@ -190,34 +217,65 @@ with col1:
     st.pyplot(plt)
 
 with col2:
-    # Pie chart untuk musim
-    labels = season_counts.index  # Menggunakan season sebagai label
-    sizes = season_counts['total_count']  # Menggunakan total_count sebagai ukuran
+    # Mengatur warna yang berbeda kontras
+    colors = ["#FF5733", "#3498DB", "#28B463", "#F39C12", "#9B59B6"]
 
-    # Membuat pie chart untuk musim
-    fig1, ax1 = plt.subplots()
-    ax1.set_title("Rental di setiap musim pada tahun 2011-2012")
-    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.figure(figsize=(10, 5))
 
-    # Tampilkan pie chart di Streamlit
-    # st.subheader('Rental di setiap musim pada tahun 2011',divider=True)
-    st.pyplot(fig1)
+    sns.barplot(
+        data=season_counts,
+        x='weathersit',
+        y='total_count',
+        palette=colors
+    )
 
-with col3:
-# Pie Chart untuk cuaca
-    weather_labels = weather_counts.index  # Menggunakan weather sebagai label
-    weather_sizes = weather_counts['total_count']  # Menggunakan total_count sebagai ukuran
+    plt.title("Rata-rata Penyewaan Berdasarkan Cuaca", fontsize=16)
+    plt.xlabel("Cuaca", fontsize=12)
+    plt.ylabel("Rata-rata Penyewaan", fontsize=12)
+    plt.tick_params(axis='x', labelsize=10)
+    plt.tick_params(axis='y', labelsize=10)
+    st.pyplot(plt)
 
-    # Membuat pie chart untuk cuaca
-    fig2, ax2 = plt.subplots()
-    ax2.set_title("Rental di setiap cuaca pada tahun 2011-2012")
-    ax2.pie(weather_sizes, labels=weather_labels, autopct='%1.1f%%', startangle=90)
-    ax2.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+# with col3:
+    # Mengatur warna yang berbeda kontras
+    colors = ["#FF5733", "#3498DB", "#28B463", "#F39C12", "#9B59B6"]
 
-    # Tampilkan pie chart di Streamlit
-    # st.subheader('Rental di setiap cuaca pada tahun 2011',divider=True)
-    st.pyplot(fig2)
+    # Membuat figure dengan dua subplot sejajar (1 baris, 2 kolom)
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(24, 6))
+
+    # Barplot untuk hari kerja
+    sns.barplot(
+        data=top5_per_season_workingday,
+        x='season',
+        y='hour',
+        palette=colors,
+        hue='season',
+        ax=ax[0]
+    )
+    ax[0].set_ylabel(None)  # Tidak menampilkan label y
+    ax[0].set_xlabel(None)  # Tidak menampilkan label x
+    ax[0].set_title("Jam Tertinggi Penyewaan pada Hari Kerja", loc="center", fontsize=15)
+    ax[0].tick_params(axis='y', labelsize=12)
+
+    # Barplot untuk hari libur
+    sns.barplot(
+        data=top5_per_season_holiday,
+        x='season',
+        y='hour',
+        palette=colors,
+        hue='season',
+        ax=ax[1]
+    )
+    ax[1].set_ylabel(None)  # Tidak menampilkan label y
+    ax[1].set_xlabel(None)  # Tidak menampilkan label x
+    ax[1].set_title("Jam Tertinggi Penyewaan pada Hari Libur", loc="center", fontsize=15)
+    ax[1].tick_params(axis='y', labelsize=12)
+
+    # Menambahkan judul utama untuk seluruh plot
+    plt.suptitle("Jam Tertinggi Penyewaan pada Hari Kerja dan Hari Libur", fontsize=20)
+
+    # Menampilkan plot
+    st.pyplot(plt)
 
 col4, col5 = st.columns([1,1])
 

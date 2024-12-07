@@ -27,8 +27,8 @@ st.markdown(
 
 # Membaca data dan memastikan kolom 'date' dalam format datetime
 
-day_df = pd.read_csv('../data/day_df.csv')
-hour_df = pd.read_csv('../data/hour_df.csv')
+day_df = pd.read_csv('day_df.csv')
+hour_df = pd.read_csv('hour_df.csv')
 # day_df['date'] = pd.to_datetime(day_df['date'])  # Mengonversi kolom 'date' ke datetime
 # hour_df['date'] = pd.to_datetime(hour_df['date'])  # Mengonversi kolom 'date' ke datetime
 

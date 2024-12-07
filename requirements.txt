@@ -1,4 +1,5 @@
-matplotlib==3.8.0
-pandas==2.2.3
-protobuf==5.28.3
-seaborn==0.13.2
+streamlit
+pandas
+matplotlib
+seaborn
+os
